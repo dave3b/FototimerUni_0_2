@@ -63,7 +63,7 @@ const float intermax = 5940.0; // maximaler interval [S], 5940S = 99M
 const float expomax = 5792.618457;  // maximaler exposure time [S], 5940S = 99M
 const unsigned long pausechecktime = 5; // time [mS] before shutter to check pause
 const unsigned long flashlimit = 1000; // 1000 mS timeout limit for flashback signal
-const char softvers[] = "FTUni 0_2 b02";
+const char softvers[] = "FTUni 0_2 b03";
 
 const bool SKIP_INTRO = true;
 
@@ -528,6 +528,7 @@ void newCycle()
     }  
   }
 
+//===================================================================
 
 /**********************************************
 **********  main status screen ***************/
@@ -671,6 +672,8 @@ void statusScreen()
     }
   } // end status screen 1
     
+//===================================================================
+
 /******************************
 ****  settings screen one *****/
 void settings1Srceen()
@@ -752,6 +755,8 @@ void settings1Srceen()
     }    
 
   } // end settings screen 1
+
+//===================================================================
 
 /*******************************
 ***** settings screen two ******/
@@ -839,6 +844,8 @@ void settings2Srceen()
     encoderValue = 0;
     }
   } // end settings screen
+
+//===================================================================
   
   /*********************************
    *******   config screen   ******/
@@ -857,6 +864,7 @@ void settings2Srceen()
           keycode = KEY_CODE_NEUTRAL;
           }
       break;
+      
       case 1:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -875,7 +883,12 @@ void settings2Srceen()
           {
           isomin = 3200;
           }  
-      break;
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }  
+        break;    
       case 2:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -894,7 +907,13 @@ void settings2Srceen()
           {
           isomax = 3200;
           }  
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }  
       break;
+      
       case 3:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -917,7 +936,13 @@ void settings2Srceen()
           lcd.print("no ");
           }
         lcd.print(" (u=Y/d=N) ");
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }  
       break;
+      
       case 4:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -953,7 +978,13 @@ void settings2Srceen()
           {
           timerpause = true;  
           }  
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }  
       break;
+      
       case 5:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -971,8 +1002,14 @@ void settings2Srceen()
         if (aftershutterdelay > 5000)
           {
           aftershutterdelay = 5000;
-          }        
+          }
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }          
       break;
+      
       case 6:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -991,8 +1028,14 @@ void settings2Srceen()
         if (contrastValue > 254)
           {
           contrastValue = 254;
-          }  
+          } 
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }   
       break;
+      
       case 7:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -1017,7 +1060,13 @@ void settings2Srceen()
           {
           lowbattery = 1023;
           }       
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }  
       break;
+      
       case 8:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -1037,8 +1086,13 @@ void settings2Srceen()
           keycode = KEY_CODE_NEUTRAL;
           delay(500);
           }      
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }            
       break;
-      } // ebd switch loop
+      } // end configmenu switch loop
     if (keycode < KEY_CODE_NEUTRAL)
       {
       configstate = configstate + keyValueH;
@@ -1056,6 +1110,7 @@ void settings2Srceen()
     encoderValue = 0;
     } // end config Screen
   
+ //===================================================================
  
  /**********************************
   **** special function screen ****/
@@ -1069,11 +1124,17 @@ void settings2Srceen()
       lcd.setCursor(1,1);
       lcd.print("back to setup? ");
       if (keycode == KEY_CODE_OK)
-        {
-        menuescreen = 2;
-        keycode = KEY_CODE_NEUTRAL;
-        }
+      {
+          menuescreen = 2;
+          keycode = KEY_CODE_NEUTRAL;
+      }
+      if (keycode == KEY_CODE_CANCEL)
+      {
+          menuescreen = 2;
+          keycode = KEY_CODE_NEUTRAL;
+      }       
       break;
+      
       case 1:
       lcd.setCursor(0,0);
       lcd.print("\x7F");
@@ -1091,7 +1152,13 @@ void settings2Srceen()
         keycode = KEY_CODE_NEUTRAL;
         delay(500);
         }
+      if (keycode == KEY_CODE_CANCEL)
+      {
+          menuescreen = 2;
+          keycode = KEY_CODE_NEUTRAL;
+      }  
       break;
+      
       case 2:
       lcd.setCursor(0,0);
       lcd.print("\x7F");
@@ -1109,7 +1176,13 @@ void settings2Srceen()
         keycode = KEY_CODE_NEUTRAL;
         delay(500);
         }
+      if (keycode == KEY_CODE_CANCEL)
+      {
+          menuescreen = 2;
+          keycode = KEY_CODE_NEUTRAL;
+      }  
       break;
+      
       case 3:
       // first check, if timer ist in pause mode
       if (timerpause == false)
@@ -1154,7 +1227,13 @@ void settings2Srceen()
         intervalramp = 0;
         keycode = KEY_CODE_NEUTRAL;
         }
+      if (keycode == KEY_CODE_CANCEL)
+      {
+          menuescreen = 2;
+          keycode = KEY_CODE_NEUTRAL;
+      }  
       break;
+      
       case 4:
       lcd.setCursor(0,0);
       lcd.print("\x7F");
@@ -1203,6 +1282,7 @@ void settings2Srceen()
         keycode = KEY_CODE_NEUTRAL;
         }
       break;
+      
       case 5:
         lcd.setCursor(0,0);
         lcd.print("\x7F chg. ISOspeed\x7E");
@@ -1268,8 +1348,14 @@ void settings2Srceen()
             getanswer(&isolevel);
             }
           keycode = KEY_CODE_NEUTRAL;
-          }        
+          } 
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }         
       break;
+      
       case 6:
         lcd.setCursor(0,0);
         lcd.print("\x7F");
@@ -1294,6 +1380,11 @@ void settings2Srceen()
           menuescreen = 2;
           keycode = KEY_CODE_NEUTRAL;
           }
+        if (keycode == KEY_CODE_CANCEL)
+        {
+            menuescreen = 2;
+            keycode = KEY_CODE_NEUTRAL;
+        }  
       break;
       }
     if (keycode < KEY_CODE_NEUTRAL)
@@ -1312,6 +1403,8 @@ void settings2Srceen()
     keycode = KEY_CODE_NEUTRAL;
     encoderValue = 0;
     }// end function Screen
+
+//===================================================================
 
 /*******************************************************
  ** manually and automatic ISO switching subfunctions **
@@ -1642,6 +1735,7 @@ void printtime(float displaytime)
     }  
   }
 
+//===================================================================
    
  /**********************************
   * EEPROM load and save functions *
