@@ -35,28 +35,28 @@ based on FotoTimerYun0.31
 ** IMPORTANT! FIRST DEFINE HARDWARE PLATFORM! **
 ***********************************************/
 //#define HARDWARE_UNO  // uncomment this, if a Arduino UNO is used
-#define HARDWARE_YUN // uncomment this, if a Arduino YUN is used
-//#define HARDWARE_MEGA // // uncomment this, if a Arduino Mega ADK is used
+//#define HARDWARE_YUN // uncomment this, if a Arduino YUN is used
+#define HARDWARE_MEGA // // uncomment this, if a Arduino Mega ADK is used
 
 /* *********************************************
 ** IMPORTANT! SECOND DEFINE ISO REMOTE TYPE!  **
 ***********************************************/
 //#define ISOREMOTE_SERIAL  // uncomment this, if a RaspberryPi as slave is used
-#define ISOREMOTE_YUN  // uncomment this, if a Arduino YUN is used
-//#define ISOREMOTE_USBHOST  // uncomment this, if a Arduino Meaga ADK is used
+//#define ISOREMOTE_YUN  // uncomment this, if a Arduino YUN is used
+#define ISOREMOTE_USBHOST  // uncomment this, if a Arduino Meaga ADK is used
 
 // set pin numbers and other constants:
 const int batteryPin = 1;  // the number of the analog input used for the battery watching
 const int encoderPinA = 3;  // the number of the encoder A digital input pin
 const int encoderPinB = 4;  // the number of the encoder B digital input pin
 const int encoderPinE = A4;  // the number of the encoder Enter digital input pin
-#ifdef HARDWARE_MEGA // MEGA ADK needs other Pin setup, because pin7 is used for USB interupt
+//% #ifdef HARDWARE_MEGA // MEGA ADK needs other Pin setup, because pin7 is used for USB interupt
   // not used on MEGA ADK     // the number of the option signal digital output pin
   const int shutterPin = 6;   // the number of the shutter signal digital output pin
-#else
-  const int optionPin = 6;    // the number of the option signal digital output pin
-  const int shutterPin = 7;   // the number of the shutter signal digital output pin
-#endif
+//% #else
+//%  const int optionPin = 6;    // the number of the option signal digital output pin
+//%  const int shutterPin = 7;   // the number of the shutter signal digital output pin
+//% #endif
 const int flashPin = 2;    // the number of the flash signal digital input pin
 const int contrastPin = 5;   // the number of the pwr signal pin for contrast voltage
 const float intermax = 5940.0; // maximaler interval [S], 5940S = 99M
@@ -77,17 +77,17 @@ const bool SKIP_INTRO = true;
 #include <exposurevary.h>
 #include <PrintSubFunctions.h>
 
-#ifdef ISOREMOTE_YUN
-  #include <yunremote.h>
-#endif
+//% #ifdef ISOREMOTE_YUN
+//%   #include <yunremote.h>
+//% #endif
 
-#ifdef ISOREMOTE_USBHOST
-  //#include <megaremote.h>
-#endif
+//% #ifdef ISOREMOTE_USBHOST
+  #include <megaremote.h>
+//% #endif
 
-#ifdef ISOREMOTE_SERIAL
+//% #ifdef ISOREMOTE_SERIAL
   //#include <isoremote.h>
-#endif
+//% #endif
 
 
 
@@ -233,20 +233,20 @@ void setup()
   #endif
   pinMode(shutterPin, OUTPUT);
   digitalWrite(shutterPin, HIGH);
-  #ifdef HARDWARE_YUN
+  //% #ifdef HARDWARE_YUN
     // on YUN, the interupts are "twisted"
     // flash signal on pin 2 interrupt
     // interrupt attached at pause/start
     //attachInterrupt(1, timerflash, FALLING);
     // config interrupts for rotary encoder on pin 3
-    attachInterrupt(0, getEncoder, FALLING);
-  #else
+  //%  attachInterrupt(0, getEncoder, FALLING);
+  //% #else
     // flash signal on pin 2 interrupt
     // interrupt attached at pause/start
     //attachInterrupt(0, timerflash, FALLING);
     // config interrupts for rotary encoder on pin 3
     attachInterrupt(1, getEncoder, FALLING);  
-  #endif
+  //% #endif
   // start delay for reading welcome message
   temp_int = 7; 
   do
@@ -640,27 +640,27 @@ void statusScreen()
       // if flashback function is used, activate interrupt
       if (delayactive == true)
         {
-        #ifdef HARDWARE_YUN
+        //% #ifdef HARDWARE_YUN
           // on YUN, the interupts are "twisted"
           // flash signal on pin 2 interrupt
-          attachInterrupt(1, timerflash, FALLING);
-        #else
+        //%  attachInterrupt(1, timerflash, FALLING);
+        //% #else
           // flash signal on pin 2 interrupt
           attachInterrupt(0, timerflash, FALLING);
-        #endif
+        //% #endif
         }  
       timerpause = false;
       }
     if (keycode == KEY_CODE_CANCEL)
       {
-      #ifdef HARDWARE_YUN
+      //% #ifdef HARDWARE_YUN
         // on YUN, the interupts are "twisted"
         // flash signal on pin 2 interrupt
-        detachInterrupt(1);
-      #else
+      //%  detachInterrupt(1);
+      //% #else
         // flash signal on pin 2 interrupt
         detachInterrupt(0);
-      #endif  
+      //% #endif  
       timerpause = true;
       }
     // done with key actions
@@ -1281,13 +1281,13 @@ void settings2Srceen()
           lcd.print("  ISO client   ");
           lcd.setCursor(1,1);
           lcd.print(" powering off ");    
-          #ifdef ISOREMOTE_SERIAL
-          clientpoweroff();
+          //% #ifdef ISOREMOTE_SERIAL
+          /*clientpoweroff();
           while (isolevel > 0)
             {
             getanswer(&isolevel);
             }
-          #endif
+          #endif*/ //%
           functionscreen = 0;
           menuescreen = 2;
           keycode = KEY_CODE_NEUTRAL;
@@ -1554,11 +1554,11 @@ void iso_switch_up(void)
       }
     }
     timestamp2 = millis();
-    #ifdef ISOREMOTE_YUN
-        Serial1.print("Debug:");
-        Serial1.print(timestamp2-timestamp1,DEC);
-        Serial1.print("mS\n");
-    #endif    
+    //% #ifdef ISOREMOTE_YUN
+    //%    Serial1.print("Debug:");
+    //%    Serial1.print(timestamp2-timestamp1,DEC);
+    //%    Serial1.print("mS\n");
+    //% #endif    
     // check for success
     if (isolvold * 2 == isolevel)
       {
@@ -1598,11 +1598,11 @@ void iso_switch_down(void)
       }
     }
     timestamp2 = millis();
-    #ifdef ISOREMOTE_YUN
-      Serial1.print("Debug:");
-      Serial1.print(timestamp2-timestamp1,DEC);
-      Serial1.print("mS\n");
-    #endif
+    //% #ifdef ISOREMOTE_YUN
+    //%  Serial1.print("Debug:");
+    //%  Serial1.print(timestamp2-timestamp1,DEC);
+    //%  Serial1.print("mS\n");
+    //% #endif
     // check for success
     if (isolvold / 2 == isolevel)
       {

@@ -21,4 +21,4 @@ more later ...
 ================
 changes since FototimerUni-0.1
 - 20141228 DP: changed Filename (Arduino IDE doesn't like dashes or dots in the name)
-
+- 20141228 DP: commented all non-MegaADK-ifdefs with //% to avoid preprocessor-related bugs
