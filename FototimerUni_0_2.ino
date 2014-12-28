@@ -63,7 +63,7 @@ const float intermax = 5940.0; // maximaler interval [S], 5940S = 99M
 const float expomax = 5792.618457;  // maximaler exposure time [S], 5940S = 99M
 const unsigned long pausechecktime = 5; // time [mS] before shutter to check pause
 const unsigned long flashlimit = 1000; // 1000 mS timeout limit for flashback signal
-const char softvers[] = "FTUni 0_2 b03";
+const char softvers[] = "FTUni 0_2 b04";
 
 const bool SKIP_INTRO = true;
 
@@ -190,6 +190,12 @@ void iso_switch_down(void);
 // display time human readable
 void printtime(float);
 
+//===================================================================
+//===================================================================
+//===================================================================
+//===================================================================
+//===================================================================
+
 /****************************************
 *** first execute once the setup only ***
 ****************************************/
@@ -204,6 +210,7 @@ void setup()
   // set analog Voltage for contrast
   pinMode(contrastPin, OUTPUT);
   analogWrite(contrastPin, contrastValue);
+  Serial.begin(115200);    //% not when doing ISO control via USB/Serial?
   
   // set up the LCD's number of columns and rows: 
   lcd.begin(16,2);
@@ -218,6 +225,7 @@ void setup()
   // print softwareversion message to the LCD.
   lcd.setCursor(0, 0);
   lcd << softvers;
+  Serial << softvers;
   delay( 1000 );
   
   // set up the analog reference
@@ -277,6 +285,12 @@ void setup()
   // and go for the timer interupt function
   MsTimer2::start();
 }
+
+//===================================================================
+//===================================================================
+//===================================================================
+//===================================================================
+//===================================================================
 
 /******************************************
 *** the absolute one and only main loop ***
@@ -360,6 +374,12 @@ void loop()
       }
     delay(100);
 }
+
+//===================================================================
+//===================================================================
+//===================================================================
+//===================================================================
+//===================================================================
 
 /********************************************
 ********************************************* 
@@ -639,7 +659,7 @@ void statusScreen()
       // get iso level now
       getisolevel();
       // loop until success
-      while ( getanswer(&isolevel) == 0 );
+      while ( getanswer(&isolevel) == 0 ) Serial << "+";  // The "Serial << "+" is for Debug only. DP / b04
       // if flashback function is used, activate interrupt
       if (delayactive == true)
         {
@@ -1497,6 +1517,9 @@ void collision_calculation_automatic(void)
        }
      }
   }
+
+//===================================================================
+
 // ISO settings screen in manually mode
 void iso_settings_manually(void)
   {
@@ -1583,6 +1606,9 @@ void iso_settings_manually(void)
       }
     }    
   }
+
+//===================================================================
+
 // ISO settings screen in automatic mode
 void iso_settings_automatic(void)
   {
@@ -1621,6 +1647,9 @@ void iso_settings_automatic(void)
       }
     }    
   }
+
+//===================================================================
+
 // switch ISO automatic up
 void iso_switch_up(void)
   {
@@ -1665,6 +1694,9 @@ void iso_switch_up(void)
   // continue timer!
   timerpause = false;
   }
+
+//===================================================================
+
 // switch ISO automatic down  
 void iso_switch_down(void)
   {
@@ -1709,6 +1741,8 @@ void iso_switch_down(void)
   // continue timer!
   timerpause = false;
   }
+
+//===================================================================
 
 // display time human readable
 void printtime(float displaytime)
