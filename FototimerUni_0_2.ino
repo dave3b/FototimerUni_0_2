@@ -63,7 +63,7 @@ const float intermax = 5940.0; // maximaler interval [S], 5940S = 99M
 const float expomax = 5792.618457;  // maximaler exposure time [S], 5940S = 99M
 const unsigned long pausechecktime = 5; // time [mS] before shutter to check pause
 const unsigned long flashlimit = 1000; // 1000 mS timeout limit for flashback signal
-const char softvers[] = "FTUni 0_2 b04";
+const char softvers[] = "FTUni 0_2 b05";
 
 const bool SKIP_INTRO = true;
 
@@ -76,6 +76,10 @@ const bool SKIP_INTRO = true;
 #include <FotoTimerSymbols.h>
 #include <exposurevary.h>
 #include <PrintSubFunctions.h>
+
+// For Arduino MegaADK ISO Switching via USB host port
+#include <ptp.h>        // CircuitsAtHome PTP Libraries must be present
+#include <canoneos.h>   // CircuitsAtHome PTP Libraries must be present
 
 //% #ifdef ISOREMOTE_YUN
 //%   #include <yunremote.h>
@@ -204,13 +208,14 @@ void setup()
   // variable to setup custom display characters
   uint8_t newLCDchar[8];
   
+  Serial.begin(115200);    //% not when doing ISO control via USB/Serial?
+
   // first load config and settings
   loadConfig();
   loadSettings();
   // set analog Voltage for contrast
   pinMode(contrastPin, OUTPUT);
   analogWrite(contrastPin, contrastValue);
-  Serial.begin(115200);    //% not when doing ISO control via USB/Serial?
   
   // set up the LCD's number of columns and rows: 
   lcd.begin(16,2);
@@ -1785,6 +1790,7 @@ void loadConfig()
   address = address + EEPROM_readAnything(address, isomin);
   address = address + EEPROM_readAnything(address, isomax);
   address = address + EEPROM_readAnything(address, aftershutterdelay);
+    Serial << "DEBUG: address after reading last config: " << address << "\n";
   }
 void saveConfig()
   {
@@ -1797,28 +1803,31 @@ void saveConfig()
   address = address + EEPROM_writeAnything(address, isomin);
   address = address + EEPROM_writeAnything(address, isomax);
   address = address + EEPROM_writeAnything(address, aftershutterdelay);
+    Serial << "DEBUG: address after writing last config: " << address << "\n";  
   }
 void loadSettings()
   {
-  // beginn with settings @ adress 512
-  int address = 512;
+  // beginn with settings @ adress 512   // b05/dp: changed from 512 to 64
+  int address = 64;
   address = address + EEPROM_readAnything(address, intervaltime);
   address = address + EEPROM_readAnything(address, intervalramp);
   address = address + EEPROM_readAnything(address, exposuretime);
   address = address + EEPROM_readAnything(address, exposureramp);
   address = address + EEPROM_readAnything(address, picgoal);
   address = address + EEPROM_readAnything(address, isotrigger);  
+    Serial << "DEBUG: address after reading last setting: " << address << "\n";
   }
 void saveSettings()
   {
-  // beginn with settings @ adress 512
-  int address = 512;
+  // beginn with settings @ adress 512   // b05/dp: changed from 512 to 64
+  int address = 64;
   address = address + EEPROM_writeAnything(address, intervaltime);
   address = address + EEPROM_writeAnything(address, intervalramp);
   address = address + EEPROM_writeAnything(address, exposuretime);
   address = address + EEPROM_writeAnything(address, exposureramp);
   address = address + EEPROM_writeAnything(address, picgoal);
   address = address + EEPROM_writeAnything(address, isotrigger);  
+    Serial << "DEBUG: address after writing last setting: " << address << "\n";  
   }
   
 
