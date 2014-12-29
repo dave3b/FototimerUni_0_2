@@ -738,13 +738,10 @@ void statusScreen()
       }
     if (keycode == KEY_CODE_OK)
       {
-      // get iso level now if ISO auto is active
-      if (isolevel > 0)
-        {
-        getisolevel();
-        // loop until success
-        while ( getanswer(&isolevel) == 0 ) Serial << "+";  // The "Serial << "+" is for Debug only. DP / b04
-        }
+      // get iso level now
+      getisolevel();
+      // loop until success
+      while ( getanswer(&isolevel) == 0 ) Serial << "+";  // The "Serial << "+" is for Debug only. DP / b04
       // if flashback function is used, activate interrupt
       if (delayactive == true)
         {
