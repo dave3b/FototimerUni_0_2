@@ -63,7 +63,7 @@ const float intermax = 5940.0; // maximaler interval [S], 5940S = 99M
 const float expomax = 5792.618457;  // maximaler exposure time [S], 5940S = 99M
 const unsigned long pausechecktime = 5; // time [mS] before shutter to check pause
 const unsigned long flashlimit = 1000; // 1000 mS timeout limit for flashback signal
-const char softvers[] = "FTUni 0_2 b05";
+const char softvers[] = "FTUni 0_2 b06";
 
 const bool SKIP_INTRO = true;
 
@@ -77,9 +77,73 @@ const bool SKIP_INTRO = true;
 #include <exposurevary.h>
 #include <PrintSubFunctions.h>
 
+//==============================================================================
 // For Arduino MegaADK ISO Switching via USB host port
+#include <usbhub.h>     // CircuitsAtHome USB Libraries must be present
 #include <ptp.h>        // CircuitsAtHome PTP Libraries must be present
 #include <canoneos.h>   // CircuitsAtHome PTP Libraries must be present
+#include <eoseventparser.h>
+
+class CamStateHandlers : public EOSStateHandlers
+{
+      enum CamStates { stInitial, stDisconnected, stConnected };
+      CamStates stateConnected;
+
+public:
+      CamStateHandlers() : stateConnected(stInitial)
+      {
+      };
+
+      virtual void OnDeviceDisconnectedState(PTP *ptp);
+      virtual void OnDeviceInitializedState(PTP *ptp);
+};
+/*
+class EosEventHandlers : public EOSEventHandlers
+{
+public:
+	virtual void OnPropertyChanged(const EOSEvent *evt);
+	virtual void OnAcceptedListSize(const EOSEvent *evt, const uint16_t size);
+	virtual void OnPropertyValuesAccepted(const EOSEvent *evt, const uint16_t index, const uint32_t &val);
+        virtual void OnObjectCreated(const EOSEvent *evt) {};
+};*/
+unsigned int iso_to_cam;
+unsigned int current_iso = 100;
+
+
+CamStateHandlers    CamStates;
+USB                 Usb;
+USBHub              Hub1(&Usb);
+CanonEOS            Eos(&Usb, &CamStates);
+
+void CamStateHandlers::OnDeviceDisconnectedState(PTP *ptp)
+{
+    if (stateConnected == stConnected || stateConnected == stInitial)
+    {
+        stateConnected = stDisconnected;
+        E_Notify(PSTR("Camera disconnected\r\n"),0x80);
+    }
+}
+
+void CamStateHandlers::OnDeviceInitializedState(PTP *ptp)
+{
+    if (stateConnected == stDisconnected || stateConnected == stInitial)
+    {
+        stateConnected = stConnected;
+        E_Notify(PSTR("Camera connected\r\n"),0x80);
+        /*   uint16_t rc = ((CanonEOS*)ptp)->SetProperty(EOS_DPC_ShutterSpeed,SHUTTER_SPEED_BULB);*/
+    }
+    
+    uint16_t rc = ((CanonEOS*)ptp)->SetProperty(EOS_DPC_Iso, iso_to_cam );
+
+    if (rc != PTP_RC_OK)
+        ErrorMessage<uint16_t>("Error", rc);
+        
+    Serial << "Sent ISO "<<iso_to_cam<< " to cam.\n";
+}
+
+
+
+//==============================================================================
 
 //% #ifdef ISOREMOTE_YUN
 //%   #include <yunremote.h>
@@ -159,6 +223,8 @@ int loopactioncounter = 0;
 unsigned long timestamp1 = 0; // first timestamp
 unsigned long timestamp2 = 0; // second timestamp
 
+
+
 // initialize the library with the numbers of the interface pins
 /*  The LCD circruit
  * LCD RS pin to digital pin 13
@@ -194,6 +260,8 @@ void iso_switch_down(void);
 // display time human readable
 void printtime(float);
 
+void setisolevel(int isolevel);
+
 //===================================================================
 //===================================================================
 //===================================================================
@@ -209,6 +277,9 @@ void setup()
   uint8_t newLCDchar[8];
   
   Serial.begin(115200);    //% not when doing ISO control via USB/Serial?
+  if (Usb.Init() == -1)
+      Serial.println("OSC did not start.");
+
 
   // first load config and settings
   loadConfig();
@@ -216,7 +287,7 @@ void setup()
   // set analog Voltage for contrast
   pinMode(contrastPin, OUTPUT);
   analogWrite(contrastPin, contrastValue);
-  
+
   // set up the LCD's number of columns and rows: 
   lcd.begin(16,2);
   // create own charaters
@@ -232,6 +303,9 @@ void setup()
   lcd << softvers;
   Serial << softvers;
   delay( 1000 );
+  
+  //iso_to_cam=0x50;
+  //Usb.Task();
   
   // set up the analog reference
   analogReference(EXTERNAL);
@@ -309,6 +383,9 @@ void loop()
     {
         loopactioncounter = 0;
     }
+/*    if( loopactioncounter == 3 ) setisolevel( 400 );
+    if( loopactioncounter == 8 ) setisolevel( 800 );*/
+    
     // check periodically for ISO speed settings message
     if (loopactioncounter == 6)
       {
@@ -661,13 +738,10 @@ void statusScreen()
       }
     if (keycode == KEY_CODE_OK)
       {
-      // get iso level now if ISO auto is active
-      if (isolevel > 0)
-        {
-        getisolevel();
-        // loop until success
-        while ( getanswer(&isolevel) == 0 ) Serial << "+";  // The "Serial << "+" is for Debug only. DP / b04
-        }
+      // get iso level now
+      getisolevel();
+      // loop until success
+      while ( getanswer(&isolevel) == 0 ) Serial << "+";  // The "Serial << "+" is for Debug only. DP / b04
       // if flashback function is used, activate interrupt
       if (delayactive == true)
         {
@@ -1469,17 +1543,21 @@ void collision_calculation_manually(void)
   }
 // calculate collision time in automatic ISO switching mode
 void collision_calculation_automatic(void)
-  {
-   // calculate the collision time
+{
+  Serial << "Collision_calculation_automatic called\n";
+
+  // calculate the collision time
    collision = 0; // reset collision time
    temp2_float = exposuretime; // store actually exposuretime temporary for calculation
    // calculate collision time via loop and manage ISO switching
    if (exposureramp > 0)
      {
+        Serial << "exp.time: " << exposuretime << "; intervaltime: " << intervaltime << "; isotrigger: " << isotrigger << "; intervaltime-isotrigger" << (intervaltime-isotrigger) << "\n";
      // check for necessity ISO level up switch
      if (exposuretime > (intervaltime-isotrigger) && isolevel < isomax && timerpause == false)
        {
-       iso_switch_up();
+         Serial << "Collision_calculation_automatic: Triggered ISO switch up\n";
+         iso_switch_up();
        }
      // loop until intervaltime is reached
      // isotrigger can be left unconsidered
@@ -1660,7 +1738,8 @@ void iso_settings_automatic(void)
 
 // switch ISO automatic up
 void iso_switch_up(void)
-  {
+{
+  Serial << "DEBUG: iso_switch_up() routine. isolevel=" << isolevel << ", isolvold=" << isolvold << "\n";
   // temp counter
   int count = 0;  
   // first pause timer!
@@ -1701,7 +1780,7 @@ void iso_switch_up(void)
       }       
   // continue timer!
   timerpause = false;
-  }
+}
 
 //===================================================================
 
@@ -1835,4 +1914,21 @@ void saveSettings()
   
 
 
+// set ISO level
+// why not in megaremote.cpp? because it can't access the Usb instance or the iso_to_cam global variable
+/*void setisolevel(int isolevel)
+{
+    Serial.print( "setisolevel() called, value " );
+    Serial.println( isolevel );
+       
+    iso_to_cam = ISOtoPTP( isolevel );
+    Usb.Task();
+
+
+       /******************************
+	enter code to set camera to ISO
+	 speed given in "int isolevel"
+	****************************** /
+    return;
+}*/
  
